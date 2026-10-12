@@ -3,7 +3,7 @@
     "type": "project",
     "description": "NextStep API - AI-assisted internship matching for Jose Rizal University",
     "require": {
-        "php": "^8.2",
+        "php": "^8.4",
         "laravel/framework": "^11.0",
         "laravel/sanctum": "^4.0"
     },
