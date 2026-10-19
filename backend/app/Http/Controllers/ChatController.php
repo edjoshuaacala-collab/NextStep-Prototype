@@ -441,12 +441,16 @@ class ChatController extends Controller
             . $catalog;
 
         try {
-            $key = config('services.groq.key');
-            $model = config('services.groq.model');
+            // Trim spaces, line breaks and stray quotes that are easy to paste
+            // by accident into an environment variable field.
+            $key = trim((string) config('services.groq.key'), " \t\n\r\0\x0B\"'");
+            $model = trim((string) config('services.groq.model'), " \t\n\r\0\x0B\"'");
 
-            if (! is_string($key) || trim($key) === ''
-                || ! is_string($model) || trim($model) === '') {
-                Log::warning('Groq configuration is missing.');
+            if ($key === '' || $model === '') {
+                Log::warning('Groq configuration is missing.', [
+                    'has_key' => $key !== '',
+                    'has_model' => $model !== '',
+                ]);
 
                 return [null, false];
             }
@@ -454,21 +458,39 @@ class ChatController extends Controller
             // Limit the context sent to the external service.
             $recentMessages = array_slice($messages, -12);
 
+            $payload = [
+                'model' => $model,
+                'temperature' => 0.2,
+                // Reasoning tokens count toward this limit, so keep it generous.
+                'max_completion_tokens' => 1024,
+                'messages' => array_merge(
+                    [['role' => 'system', 'content' => $system]],
+                    $recentMessages
+                ),
+            ];
+
+            // GPT-OSS models "think" before answering. Keep that short and do not
+            // return the thinking text. Other models do not accept these options.
+            if (str_starts_with($model, 'openai/gpt-oss-')) {
+                $payload['reasoning_effort'] = 'low';
+                $payload['include_reasoning'] = false;
+            }
+
             $response = Http::withToken($key)
+                ->acceptJson()
                 ->timeout(20)
-                ->post('https://api.groq.com/openai/v1/chat/completions', [
-                    'model' => $model,
-                    'temperature' => 0.2,
-                    'max_tokens' => 350,
-                    'messages' => array_merge(
-                        [['role' => 'system', 'content' => $system]],
-                        $recentMessages
-                    ),
-                ]);
+                ->post('https://api.groq.com/openai/v1/chat/completions', $payload);
 
             if (! $response->successful()) {
+                // Only technical error details are logged: never the API key,
+                // the student's messages, or the internship catalog.
                 Log::warning('Groq request failed', [
                     'status' => $response->status(),
+                    'model' => $model,
+                    'error_type' => $this->safeLogValue($response->json('error.type')),
+                    'error_code' => $this->safeLogValue($response->json('error.code')),
+                    'error_message' => $this->safeLogValue($response->json('error.message'), 200),
+                    'hint' => $this->groqFailureHint($response->status()),
                 ]);
 
                 return [null, false];
@@ -481,14 +503,64 @@ class ChatController extends Controller
             // Remove any legacy marker; it never controls readiness.
             $content = trim(str_replace('[READY]', '', $content));
 
-            return [$content !== '' ? $content : null, false];
+            if ($content === '') {
+                Log::warning('Groq returned an empty reply.', [
+                    'model' => $model,
+                    'finish_reason' => $this->safeLogValue($response->json('choices.0.finish_reason')),
+                    'completion_tokens' => $response->json('usage.completion_tokens'),
+                ]);
+
+                return [null, false];
+            }
+
+            Log::info('Groq request succeeded.', [
+                'model' => $model,
+                'finish_reason' => $this->safeLogValue($response->json('choices.0.finish_reason')),
+                'prompt_tokens' => $response->json('usage.prompt_tokens'),
+                'completion_tokens' => $response->json('usage.completion_tokens'),
+            ]);
+
+            return [$content, false];
         } catch (\Throwable $e) {
-            // Avoid logging potentially sensitive request content or credentials.
+            // Network errors and timeouts land here. The message is trimmed and
+            // scrubbed so that no credentials or request content are logged.
             Log::warning('Groq request encountered an error.', [
                 'exception' => get_class($e),
+                'detail' => $this->safeLogValue($e->getMessage(), 200),
             ]);
 
             return [null, false];
         }
+    }
+
+    /**
+     * Make a value safe to write to the logs: scalar only, API keys and bearer
+     * tokens removed, and limited in length.
+     */
+    private function safeLogValue(mixed $value, int $max = 120): ?string
+    {
+        if (! is_scalar($value)) {
+            return null;
+        }
+
+        $text = (string) $value;
+        $text = preg_replace('/gsk_[A-Za-z0-9]+/', '[redacted]', $text) ?? '';
+        $text = preg_replace('/Bearer\s+\S+/i', 'Bearer [redacted]', $text) ?? '';
+
+        return mb_substr($text, 0, $max);
+    }
+
+    /** A plain-language hint written to the log next to the HTTP status. */
+    private function groqFailureHint(int $status): string
+    {
+        return match (true) {
+            $status === 404 => 'Model ID or URL not found. Check GROQ_MODEL against the supported models list on console.groq.com/docs/models.',
+            $status === 401 => 'API key rejected. Check that GROQ_API_KEY is valid and not revoked.',
+            $status === 403 => 'Access denied. Check the model permissions or project limits for this API key.',
+            $status === 400 => 'Groq rejected the request format or a parameter.',
+            $status === 429 => 'Rate limit reached.',
+            $status >= 500 => 'Groq service problem. Try again later.',
+            default => 'Unexpected response from Groq.',
+        };
     }
 }
