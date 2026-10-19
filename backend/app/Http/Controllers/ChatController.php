@@ -126,12 +126,13 @@ class ChatController extends Controller
         // Explicit requests take priority over guided questions.
         // The backend decides readiness; Groq cannot trigger recommendations
         // simply by returning a marker in its response.
+        
         if ($wantsAlternatives || $wantsResults) {
             $ready = true;
 
             $reply = $wantsAlternatives
-                ? 'I’ll look for different active internships based on your preferences.'
-                : 'I’ll look through the active internships for options that match your interests and skills.';
+        ? 'Here are some different active internships to consider.'
+        : 'Here are the active internships that best match your preferences.';
 
         } elseif ($likesResults) {
             $reply = 'I’m glad those listings look suitable! Open a listing to review its requirements and application details. Would you like help comparing any of them?';
