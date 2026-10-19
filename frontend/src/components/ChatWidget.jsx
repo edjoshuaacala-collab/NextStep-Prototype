@@ -132,13 +132,49 @@ export default function ChatWidget({ hidden, open, setOpen }) {
                 <div className="bubble">
   <strong>{m.role === 'assistant' ? 'Assistant: ' : 'You: '}</strong>
 
-  {m.role === 'assistant' ? (
-    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-      {m.content}
-    </ReactMarkdown>
-  ) : (
-    <span>{m.content}</span>
-  )}
+  
+{m.role === 'assistant' ? (
+  <ReactMarkdown
+    remarkPlugins={[remarkGfm]}
+    components={{
+      a: ({ children, href, ...props }) => {
+        const isInternal =
+          typeof href === 'string' && href.startsWith('/');
+
+        const isExternal =
+          typeof href === 'string' &&
+          /^https?:\/\//i.test(href);
+
+        if (!isInternal && !isExternal) {
+          return <>{children}</>;
+        }
+
+        return isInternal ? (
+          <Link
+            to={href}
+            onClick={() => setOpen(false)}
+          >
+            {children}
+          </Link>
+        ) : (
+          <a
+            {...props}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {children}
+          </a>
+        );
+      },
+    }}
+  >
+    {m.content}
+  </ReactMarkdown>
+) : (
+  <span>{m.content}</span>
+)}
+
 </div>
 
                 {m.recommendations?.map((r) => (
