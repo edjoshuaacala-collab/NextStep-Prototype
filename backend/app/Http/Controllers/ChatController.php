@@ -16,7 +16,7 @@ class ChatController extends Controller
         $data = $request->validate([
             'messages' => ['required', 'array', 'min:1', 'max:30'],
             'messages.*.role' => ['required', 'in:user,assistant'],
-            'messages.*.content' => ['required', 'string', 'max:1000'],
+            'messages.*.content' => ['required', 'string', 'max:10000'],
             'shown_ids' => ['sometimes', 'array', 'max:100'],
             'shown_ids.*' => ['integer', 'min:1'],
         ]);
