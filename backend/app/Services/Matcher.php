@@ -244,18 +244,30 @@ class Matcher
                 $matched[] = 'location: ' . $location;
             }
 
-            $actualSetup = self::normalizeSetup(
-                (string) ($internship->work_setup ?? '')
-            );
+           
+$actualSetup = self::normalizeSetup(
+    (string) ($internship->work_setup ?? '')
+);
 
-            $setupMatches = $preferredSetup !== null
-                && $actualSetup !== null
-                && $actualSetup === $preferredSetup;
+$setupMatches = $preferredSetup !== null
+    && $actualSetup !== null
+    && $actualSetup === $preferredSetup;
 
-            if ($setupMatches) {
-                $score += 4;
-                $matched[] = 'work setup: ' . $actualSetup;
-            }
+// If the student explicitly selected a setup, do not rank
+// a different setup as an exact match.
+if (
+    $preferredSetup !== null
+    && $actualSetup !== null
+    && $actualSetup !== $preferredSetup
+) {
+    continue;
+}
+
+if ($setupMatches) {
+    $score += 4;
+    $matched[] = 'work setup: ' . $actualSetup;
+}
+
 
             // Setup/location alone cannot qualify a listing.
             $hasRoleMatch = count($matchedRoles) > 0;
