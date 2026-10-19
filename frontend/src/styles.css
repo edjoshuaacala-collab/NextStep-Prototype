@@ -56,3 +56,41 @@ input:focus, select:focus, textarea:focus { outline:2px solid var(--gold); outli
 .rec strong { color:var(--navy); } .rec span, .rec small { color:var(--ink3); } .rec-actions { display:flex; gap:8px; margin-top:6px; }
 .chat-input { display:flex; gap:8px; padding:10px; border-top:1px solid var(--line); }
 @media (max-width:900px) { .auth-grid, .grid-2 { grid-template-columns:1fr; } .filters { grid-template-columns:1fr 1fr; } .shell { grid-template-columns:1fr; } .sidebar { flex-direction:row; overflow-x:auto; grid-column:1; } .topbar { grid-column:1; padding:0 14px; } .topbar-right span { display:none; } .main { padding:20px 14px 100px; } .stats { grid-template-columns:repeat(2,1fr); } }
+
+/* Markdown formatting inside NextStep chat messages */
+.bubble > p:first-child {
+  margin-top: 0;
+}
+
+.bubble > p:last-child {
+  margin-bottom: 0;
+}
+
+.bubble p {
+  overflow-wrap: anywhere;
+}
+
+.bubble ul,
+.bubble ol {
+  padding-left: 1.4rem;
+  margin: 0.5rem 0;
+}
+
+.bubble li {
+  margin-bottom: 0.25rem;
+}
+
+.bubble h1,
+.bubble h2,
+.bubble h3 {
+  font-size: 1rem;
+  margin: 0.75rem 0 0.4rem;
+}
+
+.bubble strong {
+  font-weight: 700;
+}
+
+.bubble a {
+  overflow-wrap: anywhere;
+}
