@@ -46,8 +46,8 @@ export default function AuthPage() {
         </form>
         <form className="card" onSubmit={submitRegister}>
           <h2>Create a student account</h2>
-          <Field label="Full name" placeholder="Alex Rivera" value={rf.name} error={first('name')} onChange={(e) => setRf({ ...rf, name: e.target.value })} required />
-          <Field label="Student number" placeholder="2023-00000" value={rf.student_number} error={first('student_number')} onChange={(e) => setRf({ ...rf, student_number: e.target.value })} required />
+          <Field label="Full name" placeholder="Benedict Arrollado" value={rf.name} error={first('name')} onChange={(e) => setRf({ ...rf, name: e.target.value })} required />
+          <Field label="Student number" placeholder="00-000000" value={rf.student_number} error={first('student_number')} onChange={(e) => setRf({ ...rf, student_number: e.target.value })} required />
           <Field label="School email" type="email" placeholder="name@jru.edu" value={rf.email} error={first('email')} onChange={(e) => setRf({ ...rf, email: e.target.value })} required />
           <Field label="Password (8+ characters, letters and numbers)" type="password" placeholder="••••••••" value={rf.password} error={first('password')} onChange={(e) => setRf({ ...rf, password: e.target.value })} required />
           {rerr.message && !Object.keys(rerr.errors || {}).length && <em className="err">{rerr.message}</em>}
