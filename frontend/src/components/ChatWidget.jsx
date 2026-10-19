@@ -10,7 +10,19 @@ const GREETING = {
 };
 
 export default function ChatWidget({ hidden, open, setOpen }) {
-  const [messages, setMessages] = useState([GREETING]);
+  const [messages, setMessages] = useState(() => {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem('nextstep-chat-messages')
+    );
+
+    return Array.isArray(saved) && saved.length > 0
+      ? saved.slice(-2)
+      : [GREETING];
+  } catch {
+    return [GREETING];
+  }
+});
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const endRef = useRef(null);
@@ -19,6 +31,16 @@ export default function ChatWidget({ hidden, open, setOpen }) {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, open, busy]);
+  useEffect(() => {
+  try {
+    localStorage.setItem(
+      'nextstep-chat-messages',
+      JSON.stringify(messages.slice(-2))
+    );
+  } catch (error) {
+    console.error('Could not save chat history:', error);
+  }
+}, [messages]);
 
   if (hidden) return null;
 
