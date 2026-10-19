@@ -245,9 +245,25 @@ class Matcher
             }
 
            
+
 $actualSetup = self::normalizeSetup(
     (string) ($internship->work_setup ?? '')
 );
+
+// When the student has a known preference, only include listings
+// whose work setup can be verified and matches that preference.
+if (
+    $preferredSetup !== null
+    && $actualSetup !== $preferredSetup
+) {
+    continue;
+}
+
+if ($preferredSetup !== null && $actualSetup === $preferredSetup) {
+    $score += 4;
+    $matched[] = 'work setup: ' . $actualSetup;
+}
+
 
 $setupMatches = $preferredSetup !== null
     && $actualSetup !== null
