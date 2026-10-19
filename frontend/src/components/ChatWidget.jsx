@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const GREETING = {
   role: 'assistant',
@@ -106,9 +108,16 @@ export default function ChatWidget({ hidden, open, setOpen }) {
             {messages.map((m, i) => (
               <div key={i} className={`msg ${m.role}`}>
                 <div className="bubble">
-                  {m.role === 'assistant' ? 'Assistant: ' : 'You: '}
-                  {m.content}
-                </div>
+  <strong>{m.role === 'assistant' ? 'Assistant: ' : 'You: '}</strong>
+
+  {m.role === 'assistant' ? (
+    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+      {m.content}
+    </ReactMarkdown>
+  ) : (
+    <span>{m.content}</span>
+  )}
+</div>
 
                 {m.recommendations?.map((r) => (
                   <div className="rec" key={r.id}>
