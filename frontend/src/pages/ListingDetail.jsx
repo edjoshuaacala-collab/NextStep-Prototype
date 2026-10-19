@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api.js';
+import { useAuth } from '../auth.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
+import { IconArrowLeft, IconInfo, IconPin } from '../components/Icons.jsx';
 
 export default function ListingDetail() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [i, setI] = useState(null);
   const [note, setNote] = useState('');
   const [msg, setMsg] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const canApply = !user?.role || user.role === 'student';
 
   useEffect(() => { api(`/internships/${id}`).then((r) => setI(r.data)).catch((e) => setError(e.message)); }, [id]);
   useEffect(() => { if (i && window.location.hash === '#apply') document.getElementById('apply')?.scrollIntoView(); }, [i]);
@@ -28,36 +32,65 @@ export default function ListingDetail() {
 
   return (
     <>
-      <Link to="/listings" className="small">← Back to listings</Link>
-      <section className="card detail">
-        <h1>{i.title}</h1>
-        <div className="company">{i.company} · {i.location} ({i.work_setup})</div>
-        <p>{i.description}</p>
-        <div className="meta">
-          <div><b>Role</b>{i.role_category}</div>
-          <div><b>Duration</b>{i.duration}</div>
-          <div><b>Allowance</b>{i.allowance || '—'}</div>
-          <div><b>Slots</b>{i.slots}</div>
-          <div><b>Deadline</b>{i.deadline || '—'}</div>
+      <div>
+        <Link to="/listings" className="btn btn-text" style={{ marginLeft: -14 }}><IconArrowLeft size={18} />Back to listings</Link>
+      </div>
+
+      <section className="hero">
+        <div className="chips">
+          {i.role_category && <span className="chip chip-light">{i.role_category}</span>}
+          {i.work_setup && <span className="chip chip-light">{i.work_setup}</span>}
         </div>
-        <h3>Qualifications</h3>
-        <div className="chips">{i.skills.map((s) => <span key={s} className="chip">{s}</span>)}</div>
+        <h1>{i.title}</h1>
+        <span className="hero-sub"><IconPin size={18} />{i.company} · {i.location}</span>
       </section>
-      <section className="card" id="apply">
-        <h3>Apply to this internship</h3>
-        {i.application_status ? (
-          <p>You have applied. Status: <StatusBadge status={i.application_status} /></p>
-        ) : (
-          <form onSubmit={apply}>
-            <label className="field"><span>Short note to the company (optional)</span>
-              <textarea rows="4" maxLength="1000" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Tell them why you are a good fit…" />
-            </label>
-            {error && <em className="err">{error}</em>}
-            <button className="btn btn-gold" disabled={busy}>Apply now (demo)</button>
-          </form>
-        )}
-        {msg && <p className="ok">{msg} Track it under <Link to="/applications">My Applications</Link>.</p>}
-      </section>
+
+      <div className="detail-grid">
+        <div className="col">
+          <section className="card">
+            <h3>About the role</h3>
+            <p className="description">{i.description}</p>
+          </section>
+
+          <section className="card">
+            <h3>Details</h3>
+            <div className="tiles">
+              <div className="tile"><span>Role</span><b>{i.role_category}</b></div>
+              <div className="tile"><span>Duration</span><b>{i.duration}</b></div>
+              <div className="tile"><span>Allowance</span><b>{i.allowance || '—'}</b></div>
+              <div className="tile"><span>Slots</span><b>{i.slots}</b></div>
+              <div className="tile"><span>Deadline</span><b>{i.deadline || '—'}</b></div>
+            </div>
+          </section>
+
+          <section className="card">
+            <h3>Qualifications</h3>
+            <div className="chips">{i.skills.map((s) => <span key={s} className="chip chip-lg">{s}</span>)}</div>
+          </section>
+        </div>
+
+        <section className="card apply-card" id="apply">
+          <h3>Apply to this internship</h3>
+          {i.application_status ? (
+            <p className="muted" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              You have applied. Status: <StatusBadge status={i.application_status} />
+            </p>
+          ) : !canApply ? (
+            <div className="notice"><IconInfo size={18} />Only student accounts can apply to internships.</div>
+          ) : (
+            <form onSubmit={apply} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <p className="tip" style={{ fontSize: 13.5 }}>Add a short note so the company knows why you are a good fit.</p>
+              <label className="field">
+                <span>Short note to the company (optional)</span>
+                <textarea rows="4" maxLength="1000" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Tell them why you are a good fit…" />
+              </label>
+              {error && <em className="err">{error}</em>}
+              <button className="btn btn-filled btn-lg btn-block" disabled={busy}>Apply now (demo)</button>
+            </form>
+          )}
+          {msg && <p className="ok">{msg} Track it under <Link to="/applications">My Applications</Link>.</p>}
+        </section>
+      </div>
     </>
   );
 }

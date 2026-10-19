@@ -10,7 +10,20 @@ class User extends Authenticatable
 {
     use HasApiTokens;
 
-    protected $fillable = ['name', 'student_number', 'email', 'password', 'program', 'year_level', 'skills', 'profile_completeness'];
+    public const ROLES = ['student', 'faculty', 'partner'];
+
+    public const ROLE_LABELS = [
+        'student' => 'Student',
+        'faculty' => 'Faculty Member',
+        'partner' => 'External Partner',
+    ];
+
+    protected $fillable = [
+        'role', 'account_status',
+        'name', 'student_number', 'email', 'password', 'program', 'year_level', 'skills', 'profile_completeness',
+        'employee_id', 'position', 'department',
+        'company_name', 'job_title', 'contact_number',
+    ];
 
     protected $hidden = ['password'];
 
@@ -22,5 +35,15 @@ class User extends Authenticatable
     public function applications(): HasMany
     {
         return $this->hasMany(Application::class);
+    }
+
+    public function isStudent(): bool
+    {
+        return $this->role === 'student';
+    }
+
+    public function roleLabel(): string
+    {
+        return self::ROLE_LABELS[$this->role] ?? 'User';
     }
 }

@@ -37,8 +37,10 @@ class DatabaseSeeder extends Seeder
         }
 
         $alex = User::updateOrCreate(['email' => 'alex@jru.edu'], [
+            'role' => 'student',
+            'account_status' => 'active',
             'name' => 'Alex Rivera',
-            'student_number' => '2023-01234',
+            'student_number' => '23-012345',
             'password' => 'password123',
             'program' => 'Computer Science and Engineering',
             'year_level' => 3,
@@ -50,5 +52,26 @@ class DatabaseSeeder extends Seeder
         $harbor = Internship::where('company', 'Harbor Analytics')->first();
         Application::updateOrCreate(['user_id' => $alex->id, 'internship_id' => $bluepeak->id], ['status' => 'Under review', 'cover_note' => 'Excited to build with React and Laravel.']);
         Application::updateOrCreate(['user_id' => $alex->id, 'internship_id' => $harbor->id], ['status' => 'Endorsed', 'cover_note' => 'I enjoy SQL and data reporting.']);
+
+        // Demo faculty and partner accounts (password: password123).
+        User::updateOrCreate(['email' => 'faculty@jru.edu'], [
+            'role' => 'faculty',
+            'account_status' => 'active',
+            'name' => 'Maria Santos',
+            'password' => 'password123',
+            'employee_id' => 'EMP-0001',
+            'position' => 'Internship Coordinator',
+            'department' => 'Computer Science and Engineering',
+        ]);
+
+        User::updateOrCreate(['email' => 'hr@bluepeak.com'], [
+            'role' => 'partner',
+            'account_status' => 'active',
+            'name' => 'Juan Dela Cruz',
+            'password' => 'password123',
+            'company_name' => 'Bluepeak Software Inc.',
+            'job_title' => 'HR Specialist',
+            'contact_number' => '0917 123 4567',
+        ]);
     }
 }

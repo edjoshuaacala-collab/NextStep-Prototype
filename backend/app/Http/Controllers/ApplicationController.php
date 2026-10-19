@@ -21,6 +21,10 @@ class ApplicationController extends Controller
     /** Demo application: stored in the database with status "Pending". */
     public function store(Request $request, Internship $internship): JsonResponse
     {
+        if (! $request->user()->isStudent()) {
+            return response()->json(['message' => 'Only student accounts can apply to internships.'], 403);
+        }
+
         $data = $request->validate(['cover_note' => ['nullable', 'string', 'max:1000']]);
 
         if (! $internship->is_active) {

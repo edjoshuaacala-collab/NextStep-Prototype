@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { IconChat, IconClose, IconSparkle } from './Icons.jsx';
+import { useAuth, CHAT_STORAGE_PREFIX } from '../auth.jsx';
 
 const GREETING = {
   role: 'assistant',
@@ -10,10 +12,14 @@ const GREETING = {
 };
 
 export default function ChatWidget({ hidden, open, setOpen }) {
+  // Chat history is saved per account so one user never sees another's chat.
+  const { user } = useAuth();
+  const storageKey = `${CHAT_STORAGE_PREFIX}:${user?.id ?? 'guest'}`;
+
   const [messages, setMessages] = useState(() => {
   try {
     const saved = JSON.parse(
-      localStorage.getItem('nextstep-chat-messages')
+      localStorage.getItem(storageKey)
     );
 
     return Array.isArray(saved) && saved.length > 0
@@ -34,13 +40,13 @@ export default function ChatWidget({ hidden, open, setOpen }) {
   useEffect(() => {
   try {
     localStorage.setItem(
-      'nextstep-chat-messages',
+      storageKey,
       JSON.stringify(messages.slice(-2))
     );
   } catch (error) {
     console.error('Could not save chat history:', error);
   }
-}, [messages]);
+}, [messages, storageKey]);
 
   if (hidden) return null;
 
@@ -113,7 +119,8 @@ export default function ChatWidget({ hidden, open, setOpen }) {
       {open && (
         <section className="chat-panel" aria-label="AI Matching Assistant">
           <div className="chat-head">
-            <div>
+            <span className="chat-head-icon"><IconSparkle size={20} /></span>
+            <div className="chat-head-text">
               <strong>AI Matching Assistant</strong>
               <small>Tell me about your interests and skills</small>
             </div>
@@ -122,7 +129,7 @@ export default function ChatWidget({ hidden, open, setOpen }) {
               onClick={() => setOpen(false)}
               aria-label="Close chat"
             >
-              ×
+              <IconClose size={18} />
             </button>
           </div>
 
@@ -189,7 +196,7 @@ export default function ChatWidget({ hidden, open, setOpen }) {
                     <div className="rec-actions">
                       <Link
                         to={`/listings/${r.id}`}
-                        className="btn btn-outline btn-sm"
+                        className="btn btn-tonal"
                         onClick={() => setOpen(false)}
                       >
                         View details
@@ -197,7 +204,7 @@ export default function ChatWidget({ hidden, open, setOpen }) {
 
                       <Link
                         to={`/listings/${r.id}#apply`}
-                        className="btn btn-gold btn-sm"
+                        className="btn btn-filled"
                         onClick={() => setOpen(false)}
                       >
                         Go to application
@@ -224,7 +231,7 @@ export default function ChatWidget({ hidden, open, setOpen }) {
               placeholder="Type your message…"
               maxLength={1000}
             />
-            <button className="btn btn-gold" disabled={busy}>
+            <button className="btn btn-filled btn-lg" disabled={busy}>
               Send
             </button>
           </form>
@@ -237,22 +244,7 @@ export default function ChatWidget({ hidden, open, setOpen }) {
         aria-label="Open AI matching assistant"
         title="AI Matching Assistant"
       >
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#fff"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
-          <circle cx="9" cy="12" r=".6" fill="#fff" />
-          <circle cx="13" cy="12" r=".6" fill="#fff" />
-          <circle cx="17" cy="12" r=".6" fill="#fff" />
-        </svg>
-        <span className="chat-dot" />
+        {open ? <IconClose size={26} /> : <IconChat size={26} />}
       </button>
     </>
   );

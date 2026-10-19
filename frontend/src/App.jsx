@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth.jsx';
 import Layout from './components/Layout.jsx';
 import AuthPage from './pages/AuthPage.jsx';
+import Landing from './pages/Landing.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Listings from './pages/Listings.jsx';
 import ListingDetail from './pages/ListingDetail.jsx';
@@ -17,7 +18,8 @@ export default function App() {
   const { user } = useAuth();
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthPage />} />
+      <Route path="/login" element={user ? <Navigate to="/" replace /> : <Landing />} />
+      <Route path="/login/:role" element={user ? <Navigate to="/" replace /> : <AuthPage />} />
       <Route element={<Protected><Layout /></Protected>}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/listings" element={<Listings />} />

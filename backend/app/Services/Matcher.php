@@ -7,49 +7,67 @@ use App\Models\Internship;
 class Matcher
 {
     private const ROLE_GROUPS = [
+        // Full phrases first, then the short forms students actually type
+        // ("web dev", "gaming", "qa"). ChatController::hasRole() uses this
+        // same list, so anything the chat accepts can also be matched here.
         'web' => [
             'web development', 'web developer', 'website development',
             'website developer', 'web application', 'frontend', 'front end',
             'backend', 'back end', 'full stack', 'software development',
             'software developer',
+            'web dev', 'webdev', 'web app', 'web apps', 'websites',
+            'front-end', 'back-end', 'full-stack', 'fullstack',
+            'software dev', 'software engineering',
         ],
         'mobile' => [
             'mobile development', 'mobile developer', 'mobile app',
             'mobile application', 'app development', 'app developer',
             'android development', 'ios development',
+            'mobile dev', 'mobile apps', 'app dev', 'android', 'ios',
         ],
         'data' => [
             'data analysis', 'data analyst', 'data analytics',
             'data science', 'business intelligence', 'data engineering',
+            'data', 'analytics',
         ],
         'design' => [
             'ui ux', 'ui/ux', 'ui design', 'ux design', 'user interface',
             'user experience', 'graphic design', 'web design', 'product design',
+            'designer', 'ui', 'ux', 'uiux', 'ux/ui', 'graphics', 'graphic designer',
         ],
         'network' => [
             'networking', 'network engineer', 'network administration',
             'network administrator',
+            'network', 'networks', 'network admin',
         ],
         'cyber' => [
             'cybersecurity', 'cyber security', 'information security',
             'security analyst', 'penetration testing',
+            'cyber', 'security', 'infosec', 'ethical hacking',
         ],
         'quality' => [
             'quality assurance', 'qa tester', 'software testing',
             'test automation', 'manual testing',
+            'qa', 'testing', 'software tester', 'tester',
         ],
         'machine' => [
             'artificial intelligence', 'machine learning', 'data science',
             'ai development',
+            'ai', 'ml', 'ai/ml',
         ],
-        'game' => ['game development', 'game developer', 'game design'],
+        'game' => [
+            'game development', 'game developer', 'game design',
+            'game dev', 'gamedev', 'games', 'gaming', 'game programming',
+        ],
         'support' => [
             'it support', 'technical support', 'helpdesk', 'help desk',
             'desktop support',
+            'tech support', 'sysadmin', 'system administrator', 'systems administrator',
         ],
         'database' => [
             'database administrator', 'database administration',
             'database developer', 'database management',
+            'database', 'databases', 'dba',
         ],
         'marketing' => [
             'digital marketing', 'marketing', 'social media',
@@ -61,8 +79,28 @@ class Matcher
         ],
         'cloud' => [
             'cloud computing', 'cloud engineer', 'devops', 'site reliability',
+            'cloud',
         ],
     ];
+
+    /**
+     * True when the student's text names at least one internship area the
+     * matcher knows about (ignoring "I don't want ..." phrases).
+     */
+    public static function mentionsRole(string $text): bool
+    {
+        $text = self::removeNegatedPreferences(mb_strtolower(trim($text)));
+
+        foreach (self::ROLE_GROUPS as $terms) {
+            foreach ($terms as $term) {
+                if (self::containsTerm($text, $term)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 
     private const SKILL_GROUPS = [
         'web' => [
