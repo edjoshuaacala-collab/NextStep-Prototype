@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import { PublicTopbar } from './Landing.jsx';
-import { IconArrowLeft, IconInfo, IconSparkle } from '../components/Icons.jsx';
+import { IconArrowLeft, IconInfo } from '../components/Icons.jsx';
 
 const PASSWORD = { name: 'password', label: 'Password (8+ characters, letters and numbers)', type: 'password', placeholder: '••••••••' };
 
@@ -141,7 +141,6 @@ function AuthForm({ role }) {
 
       <div className="public-body" style={{ gap: 32 }}>
         <section className="hero hero-full">
-          <span className="chip"><IconSparkle size={16} />Signing in as {cfg.label}</span>
           <h1>{cfg.title}</h1>
           <p>{cfg.sub}</p>
         </section>

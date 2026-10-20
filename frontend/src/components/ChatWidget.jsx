@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { IconChat, IconClose, IconSparkle } from './Icons.jsx';
 import { useAuth, CHAT_STORAGE_PREFIX } from '../auth.jsx';
+import { matchSentence } from '../brand.js';
 
 const GREETING = {
   role: 'assistant',
@@ -187,10 +188,10 @@ export default function ChatWidget({ hidden, open, setOpen }) {
                 {m.recommendations?.map((r) => (
                   <div className="rec" key={r.id}>
                     <strong>{r.title}</strong>
-                    <span>{r.company} · {r.location}</span>
+                    <span>{r.company}, {r.location}</span>
 
-                    {r.matched?.length > 0 && (
-                      <small>Matches: {r.matched.join(', ')}</small>
+                    {matchSentence(r.matched) && (
+                      <small>{matchSentence(r.matched)}</small>
                     )}
 
                     <div className="rec-actions">
@@ -238,14 +239,17 @@ export default function ChatWidget({ hidden, open, setOpen }) {
         </section>
       )}
 
-      <button
-        className="chat-fab"
-        onClick={() => setOpen(!open)}
-        aria-label="Open AI matching assistant"
-        title="AI Matching Assistant"
-      >
-        {open ? <IconClose size={26} /> : <IconChat size={26} />}
-      </button>
+      {/* The chat button hides while the chat is open; the X in the header closes it. */}
+      {!open && (
+        <button
+          className="chat-fab"
+          onClick={() => setOpen(true)}
+          aria-label="Open AI matching assistant"
+          title="AI Matching Assistant"
+        >
+          <IconChat size={26} />
+        </button>
+      )}
     </>
   );
 }

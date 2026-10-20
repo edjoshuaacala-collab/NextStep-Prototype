@@ -29,12 +29,15 @@ class DashboardController extends Controller
                 'endorsed' => $apps->where('status', 'Endorsed')->count(),
                 'pending' => $apps->where('status', 'Pending')->count(),
             ],
+            'open_listings' => Internship::where('is_active', true)->count(),
             'recommended' => $recommended,
             'updates' => $apps->take(4)->map(fn ($a) => [
                 'company' => $a->internship->company,
                 'title' => $a->internship->title,
                 'status' => $a->status,
                 'internship_id' => $a->internship_id,
+                'applied_at' => $a->created_at?->toIso8601String(),
+                'updated_at' => $a->updated_at?->toIso8601String(),
             ])->values(),
         ]);
     }

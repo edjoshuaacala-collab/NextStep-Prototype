@@ -1,17 +1,84 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
-import StatusBadge from '../components/StatusBadge.jsx';
-import { initials } from '../components/Layout.jsx';
-import { IconCheckCircle, IconClock, IconFile, IconHourglass } from '../components/Icons.jsx';
+import { formatDate, matchSentence, statusNote } from '../brand.js';
+import { MiniTrack, Monogram } from '../components/Brand.jsx';
 
-const DASH_LABELS = { student: 'Student dashboard', faculty: 'Faculty dashboard', partner: 'Partner dashboard' };
+const ROLE_INTRO = {
+  faculty: 'Monitor student applications and endorsements from here.',
+  partner: 'Review student applicants and manage your internship posts from here.',
+};
 
-// Two short lines under the name, depending on the account type.
-function profileLines(user) {
-  if (user.role === 'faculty') return [user.position, user.department];
-  if (user.role === 'partner') return [user.job_title, user.company_name];
-  return [user.program, `Year ${user.year_level}`];
+// Work out where the student is on the internship track and what to do next.
+function nextStep(d) {
+  const { stats, updates } = d;
+  const endorsed = updates.find((u) => u.status === 'Endorsed');
+  const waiting = updates.find((u) => u.status === 'Under review') || updates.find((u) => u.status === 'Pending');
+
+  if (endorsed) {
+    return {
+      current: 3,
+      headline: `Start your OJT at ${endorsed.company}`,
+      sub: `You were endorsed for ${endorsed.title}${endorsed.updated_at ? ` on ${formatDate(endorsed.updated_at)}` : ''}.`,
+      action: { to: `/listings/${endorsed.internship_id}`, label: 'View application' },
+    };
+  }
+  if (waiting) {
+    return {
+      current: 2,
+      headline: `Wait for ${waiting.company}'s review`,
+      sub: `${waiting.title}${waiting.applied_at ? `, applied ${formatDate(waiting.applied_at)}` : ''}.`,
+      action: { to: `/listings/${waiting.internship_id}`, label: 'View application' },
+    };
+  }
+  return {
+    current: stats.applications > 0 ? 2 : 0,
+    headline: 'Find an internship that fits you',
+    sub: 'Start with the matches below, or ask the AI assistant for more.',
+    action: { to: '/listings', label: 'Browse listings' },
+  };
+}
+
+function TrackBand({ d }) {
+  const { stats } = d;
+  const step = nextStep(d);
+  const waitingCount = stats.under_review + stats.pending;
+  const stages = [
+    { label: 'Find a listing', num: d.open_listings ?? '–', unit: 'open listings' },
+    { label: 'Apply', num: stats.applications, unit: stats.applications === 1 ? 'application sent' : 'applications sent' },
+    { label: 'Under review', num: waitingCount, unit: 'waiting on review' },
+    { label: 'Endorsed', num: stats.endorsed, unit: stats.endorsed === 1 ? 'endorsement' : 'endorsements' },
+  ];
+
+  return (
+    <section className="track-band" style={{ '--progress': step.current }}>
+      <div className="track-top">
+        <div className="track-text">
+          <span className="track-hello">Welcome back, {d.user.name.split(' ')[0]}</span>
+          <span className="track-eyebrow">Your next step</span>
+          <h1>{step.headline}</h1>
+          <p>{step.sub}</p>
+        </div>
+        <Link className="btn btn-accent" to={step.action.to}>{step.action.label}</Link>
+      </div>
+
+      <ol className="track">
+        {stages.map((s, i) => {
+          const state = i < step.current ? 'done' : i === step.current ? 'current' : 'todo';
+          return (
+            <li key={s.label} className={`stage ${state}`} style={{ '--i': i }}>
+              <div className="stage-marker">
+                <span className="stage-dot">{i + 1}</span>
+                {i < stages.length - 1 && <span className="stage-line"><span /></span>}
+              </div>
+              <span className="stage-label">{s.label}</span>
+              <span className="stage-count"><b>{s.num}</b>{s.unit}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
 }
 
 export default function Dashboard() {
@@ -21,86 +88,65 @@ export default function Dashboard() {
 
   if (error) return <p className="err">{error}</p>;
   if (!d) return <p className="muted">Loading…</p>;
-  const { user, stats } = d;
+  const { user } = d;
+  const isStudent = !user.role || user.role === 'student';
   const anyMatched = d.recommended.some((r) => r.matched?.length > 0);
-
-  const STAT_CARDS = [
-    { value: stats.applications, label: 'Applications', icon: IconFile },
-    { value: stats.under_review, label: 'Under review', icon: IconClock },
-    { value: stats.endorsed, label: 'Endorsed', icon: IconCheckCircle },
-    { value: stats.pending, label: 'Pending', icon: IconHourglass },
-  ];
 
   return (
     <>
-      <section className="hero">
-        <span className="chip">{DASH_LABELS[user.role] || 'Student dashboard'}</span>
-        <h1>Welcome back, {user.name.split(' ')[0]}</h1>
-        <p>Here is a summary of your internship progress.</p>
-      </section>
-
-      <div className="stats">
-        {STAT_CARDS.map(({ value, label, icon: Icon }) => (
-          <div className="card card-sm stat" key={label}>
-            <span className="stat-icon"><Icon size={20} /></span>
-            <span className="stat-value">{value}</span>
-            <span className="stat-label">{label}</span>
+      {isStudent ? (
+        <TrackBand d={d} />
+      ) : (
+        <section className="track-band">
+          <div className="track-text">
+            <span className="track-hello">Welcome back</span>
+            <h1>{user.name}</h1>
+            <p>{ROLE_INTRO[user.role]}</p>
           </div>
-        ))}
-      </div>
+        </section>
+      )}
 
       <div className="two-col">
-        <section className="card" style={{ gap: 12 }}>
-          <div className="card-head" style={{ paddingBottom: 4 }}>
+        <section className="card">
+          <div className="card-head">
             <h3>Recommended internships</h3>
             {anyMatched && <span className="chip chip-gold">AI matched</span>}
           </div>
-          {d.recommended.map((r, idx) => (
-            <div className="rec-row" key={r.id}>
-              <span className="rec-num">{idx + 1}</span>
-              <div className="rec-text">
-                <span className="rec-title">{r.title}</span>
-                <span className="rec-meta">{r.company} · {r.location}</span>
-                {r.matched?.length > 0 && <span className="rec-match">Matches: {r.matched.join(', ')}</span>}
-              </div>
-              <Link className="btn btn-text" to={`/listings/${r.id}`}>View</Link>
-            </div>
-          ))}
+          {d.recommended.map((r) => {
+            const why = matchSentence(r.matched);
+            return (
+              <Link className="rec-row" key={r.id} to={`/listings/${r.id}`}>
+                <Monogram company={r.company} size={44} />
+                <div className="rec-text">
+                  <span className="rec-title">{r.title}</span>
+                  <span className="rec-meta">{r.company}, {r.location}</span>
+                  {why && <span className="rec-match">{why}</span>}
+                </div>
+                <span className="btn btn-text">View</span>
+              </Link>
+            );
+          })}
         </section>
 
-        <div className="col">
-          <section className="card card-sm">
-            <div className="profile">
-              <span className="avatar avatar-lg">{initials(user.name)}</span>
-              <div className="profile-info">
-                <span className="profile-name">{user.name}</span>
-                {profileLines(user).filter(Boolean).map((line) => (
-                  <span className="profile-meta" key={line}>{line}</span>
-                ))}
+        <section className="card">
+          <h3>Your applications</h3>
+          {d.updates.length === 0 && (
+            <p className="tip">No applications yet. Pick one of the recommended internships to get started.</p>
+          )}
+          {d.updates.map((u) => (
+            <Link className="app-mini" key={u.internship_id} to={`/listings/${u.internship_id}`}>
+              <div className="app-mini-head">
+                <Monogram company={u.company} size={36} />
+                <div className="app-mini-text"><b>{u.title}</b><span>{u.company}</span></div>
               </div>
-            </div>
-            <div className="progress-head"><span>Profile completeness</span><b>{user.profile_completeness}%</b></div>
-            <div className="progress"><div style={{ width: `${user.profile_completeness}%` }} /></div>
-          </section>
-
-          <section className="card card-sm" style={{ gap: 10 }}>
-            <h3>Recent updates</h3>
-            {d.updates.length === 0 && <p className="tip">No applications yet. Browse listings to get started.</p>}
-            {d.updates.map((u, i) => (
-              <div className="update-row" key={i}>
-                <div className="update-text"><b>{u.company}</b><span>Application</span></div>
-                <StatusBadge status={u.status} />
+              <div className="app-mini-progress">
+                <MiniTrack status={u.status} />
+                <span className={u.status === 'Endorsed' ? 'note-strong' : ''}>{statusNote(u.status, u.applied_at, u.updated_at, true)}</span>
               </div>
-            ))}
-          </section>
-
-          <section className="card card-sm" style={{ gap: 10 }}>
-            <h3>Quick links</h3>
-            <Link className="btn btn-tonal btn-block" to="/listings">Browse listings</Link>
-            <Link className="btn btn-outlined btn-block" to="/applications">My applications</Link>
-            <p className="tip">Tip: tap the gold chat button at the bottom right to ask the AI assistant.</p>
-          </section>
-        </div>
+            </Link>
+          ))}
+          {d.updates.length > 0 && <Link className="btn btn-text btn-start" to="/applications">See all applications</Link>}
+        </section>
       </div>
     </>
   );

@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import Logo from '../components/Logo.jsx';
-import { IconBuilding, IconCheck, IconClipboard, IconGradCap, IconSparkle } from '../components/Icons.jsx';
+import { IconBuilding, IconCheck, IconClipboard, IconGradCap } from '../components/Icons.jsx';
+
+const JOURNEY = ['Find a listing', 'Apply', 'Get endorsed', 'Render OJT hours'];
 
 const ROLES = [
   {
@@ -47,9 +49,16 @@ export default function Landing() {
 
       <div className="public-body">
         <section className="hero hero-full hero-xl">
-          <span className="chip"><IconSparkle size={16} />JRU internship &amp; linkages platform</span>
           <h1>Welcome to NextStep</h1>
           <p>Find internships, track your applications, and connect with partner companies, all in one place for the Jose Rizal University community.</p>
+          <ol className="track-preview" aria-label="How NextStep works">
+            {JOURNEY.map((step, i) => (
+              <li key={step} className={i === JOURNEY.length - 1 ? 'next' : ''}>
+                <span className="tp-dot">{i + 1}</span>
+                <span className="tp-label">{step}</span>
+              </li>
+            ))}
+          </ol>
         </section>
 
         <div className="center-head">

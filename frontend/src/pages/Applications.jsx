@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
-import StatusBadge from '../components/StatusBadge.jsx';
-import { IconBriefcase } from '../components/Icons.jsx';
+import { statusNote } from '../brand.js';
+import { MiniTrack, Monogram } from '../components/Brand.jsx';
 
 export default function Applications() {
   const [apps, setApps] = useState(null);
@@ -10,10 +10,9 @@ export default function Applications() {
   if (!apps) return <p className="muted">Loading…</p>;
   return (
     <>
-      <section className="hero">
-        <span className="chip">Applications</span>
+      <section className="page-head">
         <h1>My Applications</h1>
-        <p>Demo applications you have submitted.</p>
+        <p>Track the status of every internship you applied to.</p>
       </section>
 
       <div className="section-head">
@@ -22,20 +21,25 @@ export default function Applications() {
       </div>
 
       {apps.length === 0 && (
-        <p className="card empty">No applications yet. <Link to="/listings">Browse listings</Link></p>
+        <p className="card empty">No applications yet. <Link to="/listings">Browse listings</Link> to find one that fits.</p>
       )}
 
-      {apps.map((a) => (
-        <div className="app-row" key={a.id}>
-          <span className="app-icon"><IconBriefcase size={22} /></span>
-          <div className="app-text">
-            <b>{a.internship.title}</b>
-            <span>{a.internship.company} · Applied {new Date(a.created_at).toLocaleDateString()}</span>
+      <div className="rows">
+        {apps.map((a) => (
+          <div className="app-row" key={a.id}>
+            <Monogram company={a.internship.company} />
+            <div className="app-text">
+              <b>{a.internship.title}</b>
+              <span>{a.internship.company}</span>
+            </div>
+            <div className="app-progress">
+              <MiniTrack status={a.status} />
+              <span className={a.status === 'Endorsed' ? 'note-strong' : ''}>{statusNote(a.status, a.created_at, a.updated_at)}</span>
+            </div>
+            <Link className="btn btn-text" to={`/listings/${a.internship_id}`}>View</Link>
           </div>
-          <StatusBadge status={a.status} />
-          <Link className="btn btn-text" to={`/listings/${a.internship_id}`}>View</Link>
-        </div>
-      ))}
+        ))}
+      </div>
     </>
   );
 }

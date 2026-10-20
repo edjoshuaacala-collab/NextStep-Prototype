@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
+import { CategoryTag } from '../components/Brand.jsx';
+import { formatDate } from '../brand.js';
 import { IconArrowLeft, IconInfo, IconPin } from '../components/Icons.jsx';
 
 export default function ListingDetail() {
@@ -36,13 +38,13 @@ export default function ListingDetail() {
         <Link to="/listings" className="btn btn-text" style={{ marginLeft: -14 }}><IconArrowLeft size={18} />Back to listings</Link>
       </div>
 
-      <section className="hero">
+      <section className="page-head">
         <div className="chips">
-          {i.role_category && <span className="chip chip-light">{i.role_category}</span>}
-          {i.work_setup && <span className="chip chip-light">{i.work_setup}</span>}
+          <CategoryTag category={i.role_category} />
+          {i.work_setup && <span className="tag tag-plain">{i.work_setup}</span>}
         </div>
         <h1>{i.title}</h1>
-        <span className="hero-sub"><IconPin size={18} />{i.company} · {i.location}</span>
+        <span className="hero-sub"><IconPin size={18} />{i.company}, {i.location}</span>
       </section>
 
       <div className="detail-grid">
@@ -59,13 +61,12 @@ export default function ListingDetail() {
               <div className="tile"><span>Duration</span><b>{i.duration}</b></div>
               <div className="tile"><span>Allowance</span><b>{i.allowance || '—'}</b></div>
               <div className="tile"><span>Slots</span><b>{i.slots}</b></div>
-              <div className="tile"><span>Deadline</span><b>{i.deadline || '—'}</b></div>
             </div>
           </section>
 
           <section className="card">
             <h3>Qualifications</h3>
-            <div className="chips">{i.skills.map((s) => <span key={s} className="chip chip-lg">{s}</span>)}</div>
+            <div className="chips">{i.skills.map((s) => <span key={s} className="tag tag-skill">{s}</span>)}</div>
           </section>
         </div>
 
@@ -79,13 +80,15 @@ export default function ListingDetail() {
             <div className="notice"><IconInfo size={18} />Only student accounts can apply to internships.</div>
           ) : (
             <form onSubmit={apply} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <p className="tip" style={{ fontSize: 13.5 }}>Add a short note so the company knows why you are a good fit.</p>
+              <p className="tip" style={{ fontSize: 13.5 }}>
+                {i.deadline ? `Applications close ${formatDate(i.deadline)}. ` : ''}Add a short note so the company knows why you are a good fit.
+              </p>
               <label className="field">
                 <span>Short note to the company (optional)</span>
                 <textarea rows="4" maxLength="1000" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Tell them why you are a good fit…" />
               </label>
               {error && <em className="err">{error}</em>}
-              <button className="btn btn-filled btn-lg btn-block" disabled={busy}>Apply now (demo)</button>
+              <button className="btn btn-filled btn-lg btn-block" disabled={busy}>Apply now</button>
             </form>
           )}
           {msg && <p className="ok">{msg} Track it under <Link to="/applications">My Applications</Link>.</p>}

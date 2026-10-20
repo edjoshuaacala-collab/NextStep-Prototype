@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { api } from '../api.js';
-import StatusBadge from '../components/StatusBadge.jsx';
+import { matchSentence } from '../brand.js';
+import { CategoryTag, Monogram } from '../components/Brand.jsx';
 import { IconPin, IconSearch } from '../components/Icons.jsx';
 
 const empty = {
@@ -12,36 +13,30 @@ const empty = {
   location: '',
 };
 
-function ListingCard({ item, featured = false }) {
+const STATUS_LINE = {
+  Pending: 'You applied to this role',
+  'Under review': 'Your application is under review',
+  Endorsed: 'You were endorsed for this role',
+};
+
+function ListingRow({ item, featured = false }) {
+  const note = item.application_status
+    ? STATUS_LINE[item.application_status] || `Status: ${item.application_status}`
+    : featured ? matchSentence(item.matched) : '';
+  const where = [item.location, item.work_setup?.toLowerCase()].filter(Boolean).join(', ');
+
   return (
-    <article className={`listing${featured ? ' listing-featured' : ''}`}>
-      <div className="chips">
-        {item.role_category && <span className="chip">{item.role_category}</span>}
-        {item.work_setup && <span className="chip">{item.work_setup}</span>}
-      </div>
-
-      <div className="listing-head">
+    <article className={`listing-row${featured ? ' featured' : ''}`}>
+      <Monogram company={item.company} />
+      <div className="listing-text">
+        <CategoryTag category={item.role_category} />
         <h3>{item.title}</h3>
-        <div className="company">{item.company}</div>
+        <span className="company">{item.company}</span>
+        <span className="meta-line"><IconPin size={15} />{where}</span>
       </div>
-
-      <p className="skills">
-        {Array.isArray(item.skills)
-          ? item.skills.slice(0, 3).join(', ')
-          : 'See listing details'}
-      </p>
-
-      <span className="meta-line"><IconPin size={16} />{item.location}</span>
-
-      <div className="listing-foot">
-        {item.application_status ? (
-          <StatusBadge status={item.application_status} />
-        ) : <span />}
-
-        <Link
-          className={`btn ${featured ? 'btn-filled' : 'btn-tonal'}`}
-          to={`/listings/${item.id}`}
-        >
+      <div className="listing-side">
+        {note && <span className={item.application_status ? 'listing-status' : 'listing-match'}>{note}</span>}
+        <Link className={`btn ${featured ? 'btn-filled' : 'btn-tonal'}`} to={`/listings/${item.id}`}>
           View details
         </Link>
       </div>
@@ -119,10 +114,9 @@ export default function Listings() {
 
   return (
     <>
-      <section className="hero">
-        <span className="chip">Internships</span>
+      <section className="page-head">
         <h1>Internship Listings</h1>
-        <p>{items.length} available opportunities</p>
+        <p>{items.length} open listings</p>
 
         <form
           style={{ display: 'contents' }}
@@ -173,9 +167,9 @@ export default function Listings() {
             with the NextStep matching assistant.
           </p>
 
-          <div className="cards">
+          <div className="rows">
             {recommended.map((item) => (
-              <ListingCard key={item.id} item={item} featured />
+              <ListingRow key={item.id} item={item} featured />
             ))}
           </div>
         </>
@@ -183,7 +177,11 @@ export default function Listings() {
 
       <div className="section-head">
         <h2>All internship listings</h2>
-        {!loading && <span className="chip">{normalItems.length} results</span>}
+        {!loading && (
+          <span className="chip">
+            {normalItems.length} {recommended.length > 0 ? 'more' : normalItems.length === 1 ? 'listing' : 'listings'}
+          </span>
+        )}
       </div>
 
       {error && <p className="err">{error}</p>}
@@ -197,9 +195,9 @@ export default function Listings() {
             : 'No internships match your filters.'}
         </p>
       ) : (
-        <div className="cards">
+        <div className="rows">
           {normalItems.map((item) => (
-            <ListingCard key={item.id} item={item} />
+            <ListingRow key={item.id} item={item} />
           ))}
         </div>
       )}
