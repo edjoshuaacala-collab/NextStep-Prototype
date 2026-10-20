@@ -57,7 +57,7 @@ export default function Layout() {
         <NavLink to="/applications" className={navClass}><IconFile size={22} />My Applications</NavLink>
         <ProfileFooter user={user} />
       </aside>
-      <main className="main"><Outlet /></main>
+      <main className="main"><div className="page-enter" key={pathname}><Outlet /></div></main>
       <ChatWidget hidden={!showChat} open={chatOpen} setOpen={setChatOpen} />
     </div>
   );

@@ -31,6 +31,16 @@ export default function ChatWidget({ hidden, open, setOpen }) {
   }
 });
   const [input, setInput] = useState('');
+  // Keep the panel mounted for a moment after closing so it can animate out.
+  const [mounted, setMounted] = useState(open);
+  const [closing, setClosing] = useState(false);
+  useEffect(() => {
+    if (open) { setMounted(true); setClosing(false); return undefined; }
+    if (!mounted) return undefined;
+    setClosing(true);
+    const t = setTimeout(() => { setMounted(false); setClosing(false); }, 160);
+    return () => clearTimeout(t);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   const [busy, setBusy] = useState(false);
   const endRef = useRef(null);
   const navigate = useNavigate();
@@ -117,8 +127,8 @@ export default function ChatWidget({ hidden, open, setOpen }) {
 
   return (
     <>
-      {open && (
-        <section className="chat-panel" aria-label="AI Matching Assistant">
+      {mounted && (
+        <section className={`chat-panel${closing ? ' is-closing' : ''}`} aria-label="AI Matching Assistant">
           <div className="chat-head">
             <span className="chat-head-icon"><IconSparkle size={20} /></span>
             <div className="chat-head-text">
@@ -218,7 +228,9 @@ export default function ChatWidget({ hidden, open, setOpen }) {
 
             {busy && (
               <div className="msg assistant">
-                <div className="bubble">Assistant is typing…</div>
+                <div className="bubble typing" role="status" aria-label="Assistant is typing">
+                  <span /><span /><span />
+                </div>
               </div>
             )}
 

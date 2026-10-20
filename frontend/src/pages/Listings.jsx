@@ -19,14 +19,14 @@ const STATUS_LINE = {
   Endorsed: 'You were endorsed for this role',
 };
 
-function ListingRow({ item, featured = false }) {
+function ListingRow({ item, featured = false, n }) {
   const note = item.application_status
     ? STATUS_LINE[item.application_status] || `Status: ${item.application_status}`
     : featured ? matchSentence(item.matched) : '';
   const where = [item.location, item.work_setup?.toLowerCase()].filter(Boolean).join(', ');
 
   return (
-    <article className={`listing-row${featured ? ' featured' : ''}`}>
+    <article className={`listing-row${featured ? ' featured' : ''}`} style={n != null ? { '--n': n } : undefined}>
       <Monogram company={item.company} />
       <div className="listing-text">
         <CategoryTag category={item.role_category} />
@@ -167,9 +167,9 @@ export default function Listings() {
             with the NextStep matching assistant.
           </p>
 
-          <div className="rows">
-            {recommended.map((item) => (
-              <ListingRow key={item.id} item={item} featured />
+          <div className="rows rows-reveal">
+            {recommended.map((item, n) => (
+              <ListingRow key={item.id} item={item} featured n={n} />
             ))}
           </div>
         </>
