@@ -167,6 +167,11 @@ a { color: var(--navy); }
 .field.has-select::after { content: ''; position: absolute; right: 16px; top: 50%; width: 10px; height: 10px; border-right: 2px solid var(--ink2); border-bottom: 2px solid var(--ink2); transform: translateY(-75%) rotate(45deg); pointer-events: none; }
 .field textarea { resize: vertical; min-height: 96px; line-height: 1.5; }
 .field-error { border-bottom-color: var(--error); }
+.field-input-row { display: flex; align-items: center; gap: 8px; }
+.field-input-row input { flex: 1; min-width: 0; }
+.pw-toggle { flex: none; width: 36px; height: 36px; margin: -6px -8px -6px 0; border: 0; border-radius: 50%; background: transparent; color: var(--ink2); display: grid; place-items: center; cursor: pointer; transition: background-color 150ms var(--ease), color 150ms var(--ease); }
+.pw-toggle:hover { background: rgba(27, 42, 94, 0.08); color: var(--navy); }
+.pw-toggle[aria-pressed="true"] { color: var(--navy); }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .field-wrap { display: flex; flex-direction: column; gap: 4px; }
 

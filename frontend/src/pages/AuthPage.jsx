@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import { PublicTopbar } from './Landing.jsx';
-import { IconArrowLeft, IconInfo } from '../components/Icons.jsx';
+import { IconArrowLeft, IconEye, IconEyeOff, IconInfo } from '../components/Icons.jsx';
 
 const PASSWORD = { name: 'password', label: 'Password (8+ characters, letters and numbers)', type: 'password', placeholder: '••••••••' };
 
@@ -67,6 +67,9 @@ const ROLES = {
 };
 
 function Field({ label, error, options, ...props }) {
+  // Password fields get a show/hide toggle.
+  const [shown, setShown] = useState(false);
+  const isPassword = props.type === 'password';
   return (
     <div className="field-wrap">
       <label className={`field${options ? ' has-select' : ''}${error ? ' field-error' : ''}`}>
@@ -75,6 +78,19 @@ function Field({ label, error, options, ...props }) {
           <select {...props}>
             {options.map((o) => <option key={o}>{o}</option>)}
           </select>
+        ) : isPassword ? (
+          <span className="field-input-row">
+            <input {...props} type={shown ? 'text' : 'password'} />
+            <button
+              type="button"
+              className="pw-toggle"
+              onClick={() => setShown((v) => !v)}
+              aria-label={shown ? 'Hide password' : 'Show password'}
+              aria-pressed={shown}
+            >
+              {shown ? <IconEyeOff size={20} /> : <IconEye size={20} />}
+            </button>
+          </span>
         ) : (
           <input {...props} />
         )}
